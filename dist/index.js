@@ -28466,6 +28466,7 @@ const extractLinksFromMarkdown = (markdown) => {
         console.log(`extractLinksFromMarkdown function ${line}`);
         let match;
         while ((match = markdownLinkRegex.exec(line)) !== null) {
+            console.log(`extractLinksFromMarkdown function ${match}`);
             links.push({ url: match[2], line: index + 1 });
         }
     });

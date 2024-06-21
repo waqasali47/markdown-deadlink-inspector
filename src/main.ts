@@ -23,6 +23,7 @@ const extractLinksFromMarkdown = (markdown: string): MarkdownLink[] => {
     console.log(`extractLinksFromMarkdown function ${line}`)
     let match: RegExpExecArray | null
     while ((match = markdownLinkRegex.exec(line)) !== null) {
+      console.log(`extractLinksFromMarkdown function ${match}`)
       links.push({ url: match[2], line: index + 1 })
     }
   })
