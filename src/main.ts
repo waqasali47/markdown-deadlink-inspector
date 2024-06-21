@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
 import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
@@ -12,13 +11,12 @@ const jwtToken: string = process.env.JWT_TOKEN || ''
 
 const checkLink = async (url: string): Promise<void> => {
   try {
-    const config = {
-      headers: { Authorization: `Bearer ${jwtToken}` }
-    }
+   if(jwtToken !== '') { 
     const response = await axios.get(url, config)
     if (response.status === 404) {
       throw new Error(`Dead link found: ${url}`)
     }
+  }console.error(`JWT not provided`)
   } catch (error) {
     console.error(`Error checking link ${url}: ${(error as Error).message}`)
     throw error
