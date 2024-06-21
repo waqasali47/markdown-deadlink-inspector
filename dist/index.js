@@ -28454,6 +28454,7 @@ const path = __importStar(__nccwpck_require__(1017));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const readdir = fs.promises.readdir;
 const readFile = fs.promises.readFile;
+const useToken = process.env.INPUT_USETOKEN === 'true';
 const docsPath = process.env.DOCS_PATH || './docs';
 const jwtToken = process.env.JWT_TOKEN || '';
 const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g;
@@ -28468,17 +28469,23 @@ const extractLinksFromMarkdown = (markdown) => {
 };
 const checkLink = async (url) => {
     try {
-        const config = {
-            headers: { Authorization: `Bearer ${jwtToken}` }
-        };
+        const config = {};
+        // Apply the JWT token in the header if useToken is true
+        if (useToken && jwtToken) {
+            config.headers = { Authorization: `Bearer ${jwtToken}` };
+        }
         const response = await axios_1.default.head(url, config);
-        if (response.status === 404) {
-            throw new Error(`Dead link found: ${url}`);
+        if (response.status === 200) {
+            console.log(`✅ ${url}`);
+        }
+        else {
+            console.error(`❌ ${url} (Status: ${response.status})`);
+            process.exitCode = 1;
         }
     }
     catch (error) {
-        console.error(`Error checking link ${url}: ${error.message}`);
-        throw error;
+        console.error(`❌ ${url} (Error: ${error.message})`);
+        process.exitCode = 1;
     }
 };
 const extractEmptyImageLinksFromMarkdown = (markdown) => {
@@ -28517,7 +28524,13 @@ async function run() {
         for (const file of markdownFiles) {
             await checkLinksInMarkdown(path.join(docsPath, file));
         }
-        console.log('All links checked successfully.');
+        if (process.exitCode !== 0) {
+            console.error('Some links failed the check.');
+            process.exit(1); // Exit with error code if there were any link check failures
+        }
+        else {
+            console.log('All links checked successfully.');
+        }
     }
     catch (error) {
         // Fail the workflow run if an error occurs
