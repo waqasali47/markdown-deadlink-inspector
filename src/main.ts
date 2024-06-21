@@ -20,11 +20,13 @@ const extractLinksFromMarkdown = (markdown: string): MarkdownLink[] => {
   const links: MarkdownLink[] = []
 
   lines.forEach((line, index) => {
+    // Reset lastIndex to ensure the regex state is clear before each line is processed
     console.log(`extractLinksFromMarkdown function ${line}`)
+    markdownLinkRegex.lastIndex = 0
     let match: RegExpExecArray | null
     while ((match = markdownLinkRegex.exec(line)) !== null) {
-      console.log(`extractLinksFromMarkdown function ${match}`)
-      links.push({ url: match[2], line: index + 1 })
+      console.log('match----')
+      links.push({ url: match[2], line: index + 1 }) // match[2] contains the URL
     }
   })
 
