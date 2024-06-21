@@ -28503,6 +28503,7 @@ const extractEmptyImageLinksFromMarkdown = (markdown) => {
 const checkLinksInMarkdown = async (filePath) => {
     const markdown = await readFile(filePath, 'utf8');
     const links = extractLinksFromMarkdown(markdown);
+    console.log(`checkLinksInMarkdown function ${filePath}`);
     for (const { url, line } of links) {
         console.log(`Checking link: ${url}`);
         await checkLink(url, filePath, line);

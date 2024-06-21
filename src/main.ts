@@ -74,6 +74,7 @@ const extractEmptyImageLinksFromMarkdown = (markdown: string): string[] => {
 const checkLinksInMarkdown = async (filePath: string): Promise<void> => {
   const markdown: string = await readFile(filePath, 'utf8')
   const links: MarkdownLink[] = extractLinksFromMarkdown(markdown)
+  console.log(`checkLinksInMarkdown function ${filePath}`)
   for (const { url, line } of links) {
     console.log(`Checking link: ${url}`)
     await checkLink(url, filePath, line)
