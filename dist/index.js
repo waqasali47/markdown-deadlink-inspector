@@ -28504,6 +28504,7 @@ const checkLinksInMarkdown = async (filePath) => {
     const markdown = await readFile(filePath, 'utf8');
     const links = extractLinksFromMarkdown(markdown);
     for (const { url, line } of links) {
+        console.log(`Checking link: ${url}`);
         await checkLink(url, filePath, line);
     }
 };
@@ -28520,7 +28521,7 @@ async function run() {
             await checkLinksInMarkdown(path.join(docsPath, file));
         }
         if (process.exitCode !== 0) {
-            console.log(`X----${process.exitCode}`);
+            console.log(`exit code----${process.exitCode}`);
             console.error('Some links failed the check.');
             process.exit(1); // Exit with error code if there were any link check failures
         }
