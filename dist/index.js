@@ -28463,6 +28463,7 @@ const extractLinksFromMarkdown = (markdown) => {
     const lines = markdown.split(/\r?\n/);
     const links = [];
     lines.forEach((line, index) => {
+        console.log(`extractLinksFromMarkdown function ${line}`);
         let match;
         while ((match = markdownLinkRegex.exec(line)) !== null) {
             links.push({ url: match[2], line: index + 1 });
