@@ -75,10 +75,11 @@ export async function run(): Promise<void> {
     const files: string[] = await readdir(docsPath)
     const markdownFiles: string[] = files.filter(file => file.endsWith('.md'))
     for (const file of markdownFiles) {
+      console.log(`X----checking file`);
       await checkLinksInMarkdown(path.join(docsPath, file))
     }
     if (process.exitCode !== 0) {
-      console.log(`X----[${process.exitCode}`);
+      console.log(`X----${process.exitCode}`);
       console.error('Some links failed the check.')
       process.exit(1) // Exit with error code if there were any link check failures
     } else {
