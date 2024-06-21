@@ -26,6 +26,7 @@ const checkLink = async (
     }
 
     const response = await axios.head(url, config)
+    console.log(`Response status for ${url}:`, response.status)
     if (response.status === 200) {
       console.log(`✅ [${filePath}:${line}] ${url}`)
     } else {
