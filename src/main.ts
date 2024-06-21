@@ -2,31 +2,70 @@ import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
-import markdownLinkExtractor from 'markdown-link-extractor'
+
 const readdir = fs.promises.readdir
 const readFile = fs.promises.readFile
 
 const docsPath: string = process.env.DOCS_PATH || './docs'
 const jwtToken: string = process.env.JWT_TOKEN || ''
 
+const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g
+const emptyImageLinkRegex = /!$$$$$(http[s]?:\/\/[^)]+)$/g
+
+const extractLinksFromMarkdown = (markdown: string): string[] => {
+  const links: string[] = []
+  let match: RegExpExecArray | null
+
+  while ((match = markdownLinkRegex.exec(markdown)) !== null) {
+    links.push(match[2]) // match[2] contains the URL
+  }
+
+  return links
+}
 const checkLink = async (url: string): Promise<void> => {
   try {
-   if(jwtToken !== '') { 
-    const response = await axios.get(url, config)
+    const config = {
+      headers: { Authorization: `Bearer ${jwtToken}` }
+    }
+    const response = await axios.head(url, config)
     if (response.status === 404) {
       throw new Error(`Dead link found: ${url}`)
     }
-  }console.error(`JWT not provided`)
   } catch (error) {
     console.error(`Error checking link ${url}: ${(error as Error).message}`)
     throw error
   }
 }
 
+const extractEmptyImageLinksFromMarkdown = (markdown: string): string[] => {
+  const links: string[] = []
+  let match: RegExpExecArray | null
+
+  while ((match = emptyImageLinkRegex.exec(markdown)) !== null) {
+    links.push(match[1]) // match[1] contains the URL
+  }
+
+  return links
+}
+
 const checkLinksInMarkdown = async (filePath: string): Promise<void> => {
   const markdown: string = await readFile(filePath, 'utf8')
-  const links: string[] = markdownLinkExtractor(markdown)
-  await Promise.all(links.map(checkLink))
+
+  // Extract and check regular links
+  const links: string[] = extractLinksFromMarkdown(markdown)
+  for (const link of links) {
+    await checkLink(link)
+  }
+
+  // Extract and report empty image links
+  const emptyImageLinks: string[] = extractEmptyImageLinksFromMarkdown(markdown)
+  if (emptyImageLinks.length > 0) {
+    console.error(`Empty image links found in ${filePath}:`)
+    for (const link of emptyImageLinks) {
+      console.error(link)
+    }
+    process.exit(1) // Exit with an error code if empty image links are found
+  }
 }
 /**
  * The main function for the action.
