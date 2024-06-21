@@ -21,6 +21,7 @@ const checkLink = async (
     }
 
     if (jwtToken && url.startsWith('https://baseplate.legogroup.io/')) {
+      console.log(`Checking ${url} with JWT token`)
       config.headers['Authorization'] = `Bearer ${jwtToken}`
     }
 

@@ -39564,6 +39564,7 @@ const checkLink = async (url, filePath, line) => {
             headers: {}
         };
         if (jwtToken && url.startsWith('https://baseplate.legogroup.io/')) {
+            console.log(`Checking ${url} with JWT token`);
             config.headers['Authorization'] = `Bearer ${jwtToken}`;
         }
         const response = await axios_1.default.head(url, config);
