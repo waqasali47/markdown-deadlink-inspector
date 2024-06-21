@@ -28460,31 +28460,35 @@ const jwtToken = process.env.JWT_TOKEN || '';
 const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g;
 const emptyImageLinkRegex = /!$$$$$(http[s]?:\/\/[^)]+)$/g;
 const extractLinksFromMarkdown = (markdown) => {
+    const lines = markdown.split(/\r?\n/);
     const links = [];
-    let match;
-    while ((match = markdownLinkRegex.exec(markdown)) !== null) {
-        links.push(match[2]); // match[2] contains the URL
-    }
+    lines.forEach((line, index) => {
+        let match;
+        while ((match = markdownLinkRegex.exec(line)) !== null) {
+            links.push({ url: match[2], line: index + 1 });
+        }
+    });
     return links;
 };
-const checkLink = async (url) => {
+const checkLink = async (url, filePath, line) => {
     try {
         const config = {};
-        // Apply the JWT token in the header if useToken is true
-        if (useToken && jwtToken) {
+        if (useToken &&
+            jwtToken &&
+            url.startsWith('https://baseplate.legogroup.io/')) {
             config.headers = { Authorization: `Bearer ${jwtToken}` };
         }
         const response = await axios_1.default.head(url, config);
         if (response.status === 200) {
-            console.log(`✅ ${url}`);
+            console.log(`✅ [${filePath}:${line}] ${url}`);
         }
         else {
-            console.error(`❌ ${url} (Status: ${response.status})`);
+            console.error(`❌ [${filePath}:${line}] ${url} (Status: ${response.status})`);
             process.exitCode = 1;
         }
     }
     catch (error) {
-        console.error(`❌ ${url} (Error: ${error.message})`);
+        console.error(`❌ [${filePath}:${line}] ${url} (Error: ${error.message})`);
         process.exitCode = 1;
     }
 };
@@ -28498,19 +28502,9 @@ const extractEmptyImageLinksFromMarkdown = (markdown) => {
 };
 const checkLinksInMarkdown = async (filePath) => {
     const markdown = await readFile(filePath, 'utf8');
-    // Extract and check regular links
     const links = extractLinksFromMarkdown(markdown);
-    for (const link of links) {
-        await checkLink(link);
-    }
-    // Extract and report empty image links
-    const emptyImageLinks = extractEmptyImageLinksFromMarkdown(markdown);
-    if (emptyImageLinks.length > 0) {
-        console.error(`Empty image links found in ${filePath}:`);
-        for (const link of emptyImageLinks) {
-            console.error(link);
-        }
-        process.exit(1); // Exit with an error code if empty image links are found
+    for (const { url, line } of links) {
+        await checkLink(url, filePath, line);
     }
 };
 /**
@@ -28522,9 +28516,11 @@ async function run() {
         const files = await readdir(docsPath);
         const markdownFiles = files.filter(file => file.endsWith('.md'));
         for (const file of markdownFiles) {
+            console.log(docsPath);
             await checkLinksInMarkdown(path.join(docsPath, file));
         }
         if (process.exitCode !== 0) {
+            console.log(`X----${process.exitCode}`);
             console.error('Some links failed the check.');
             process.exit(1); // Exit with error code if there were any link check failures
         }
