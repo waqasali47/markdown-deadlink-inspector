@@ -28517,6 +28517,7 @@ async function run() {
         const files = await readdir(docsPath);
         console.log(files);
         const markdownFiles = files.filter(file => file.endsWith('.md'));
+        console.log(markdownFiles);
         for (const file of markdownFiles) {
             console.log(docsPath);
             await checkLinksInMarkdown(path.join(docsPath, file));
