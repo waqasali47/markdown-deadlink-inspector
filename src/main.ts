@@ -75,7 +75,7 @@ export async function run(): Promise<void> {
     const files: string[] = await readdir(docsPath)
     const markdownFiles: string[] = files.filter(file => file.endsWith('.md'))
     for (const file of markdownFiles) {
-      console.log(`X----checking file`);
+      console.log(docsPath);
       await checkLinksInMarkdown(path.join(docsPath, file))
     }
     if (process.exitCode !== 0) {
