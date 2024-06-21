@@ -5,7 +5,7 @@ import axios from 'axios'
 
 const readdir = fs.promises.readdir
 const readFile = fs.promises.readFile
-
+const useToken: boolean = process.env.INPUT_USETOKEN === 'true';
 const docsPath: string = process.env.DOCS_PATH || './docs'
 const jwtToken: string = process.env.JWT_TOKEN || ''
 
@@ -22,20 +22,26 @@ const extractLinksFromMarkdown = (markdown: string): string[] => {
 
   return links
 }
+
 const checkLink = async (url: string): Promise<void> => {
   try {
-    const config = {
-      headers: { Authorization: `Bearer ${jwtToken}` }
+    const config: any = {};
+    // Apply the JWT token in the header if useToken is true
+    if (useToken && jwtToken) {
+      config.headers = { Authorization: `Bearer ${jwtToken}` };
     }
-    const response = await axios.head(url, config)
-    if (response.status === 404) {
-      throw new Error(`Dead link found: ${url}`)
+    const response = await axios.head(url, config);
+    if (response.status === 200) {
+      console.log(`✅ ${url}`);
+    } else {
+      console.error(`❌ ${url} (Status: ${response.status})`);
+      process.exitCode = 1;
     }
   } catch (error) {
-    console.error(`Error checking link ${url}: ${(error as Error).message}`)
-    throw error
+    console.error(`❌ ${url} (Error: ${(error as Error).message})`);
+    process.exitCode = 1;
   }
-}
+};
 
 const extractEmptyImageLinksFromMarkdown = (markdown: string): string[] => {
   const links: string[] = []
@@ -73,12 +79,17 @@ const checkLinksInMarkdown = async (filePath: string): Promise<void> => {
  */
 export async function run(): Promise<void> {
   try {
-    const files: string[] = await readdir(docsPath)
-    const markdownFiles: string[] = files.filter(file => file.endsWith('.md'))
+    const files: string[] = await readdir(docsPath);
+    const markdownFiles: string[] = files.filter((file) => file.endsWith('.md'));
     for (const file of markdownFiles) {
-      await checkLinksInMarkdown(path.join(docsPath, file))
+      await checkLinksInMarkdown(path.join(docsPath, file));
     }
-    console.log('All links checked successfully.')
+    if (process.exitCode !== 0) {
+      console.error('Some links failed the check.');
+      process.exit(1); // Exit with error code if there were any link check failures
+    } else {
+      console.log('All links checked successfully.');
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

@@ -12,6 +12,10 @@ inputs:
     description: 'Path to your markdown files'
     required: false
     default: './docs'
+  useToken:
+    description: 'Use a JWT token to authenticate requests'
+    required: false
+    default: 'false'
 
 runs:
   using: node20
