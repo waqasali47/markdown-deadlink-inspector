@@ -28458,21 +28458,22 @@ const useToken = process.env.INPUT_USETOKEN === 'true';
 const docsPath = process.env.DOCS_PATH || './docs';
 const jwtToken = process.env.JWT_TOKEN || '';
 const emptyImageLinkRegex = /!$$$$$(http[s]?:\/\/[^)]+)$/g;
-const markdownLinkRegex = /$$([^$$]+)\]$(.*?)$/g;
+const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g;
 const extractLinksFromMarkdown = (markdown) => {
     const lines = markdown.split(/\r?\n/);
     const links = [];
     lines.forEach((line, index) => {
         let match;
-        // Use a fresh regex object for each line to avoid issues with global state
-        const regex = new RegExp(markdownLinkRegex);
-        console.log(`regex----${line}`);
-        while ((match = regex.exec(line)) !== null) {
-            console.log(`match----${{ url: match[2], line: index + 1 }}`);
-            links.push({ url: match[2], line: index + 1 }); // match[2] contains the URL
+        // Reset lastIndex to ensure the regex state is clear before each line is processed
+        markdownLinkRegex.lastIndex = 0;
+        while ((match = markdownLinkRegex.exec(line)) !== null) {
+            links.push({
+                text: match[1], // match[1] contains the link text
+                url: match[2], // match[2] contains the URL
+                line: index + 1
+            });
         }
     });
-    console.log(`links----${links}`);
     return links;
 };
 const checkLink = async (url, filePath, line) => {
