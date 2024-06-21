@@ -12,20 +12,19 @@ const useToken: boolean = process.env.INPUT_USETOKEN === 'true'
 const docsPath: string = process.env.DOCS_PATH || './docs'
 const jwtToken: string = process.env.JWT_TOKEN || ''
 
-const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g
 const emptyImageLinkRegex = /!$$$$$(http[s]?:\/\/[^)]+)$/g
-
+const markdownLinkRegex = /$$([^$$]+)\]$(.*?)$/g
 const extractLinksFromMarkdown = (markdown: string): MarkdownLink[] => {
   const lines = markdown.split(/\r?\n/)
   const links: MarkdownLink[] = []
 
   lines.forEach((line, index) => {
-    // Reset lastIndex to ensure the regex state is clear before each line is processed
-    console.log(`extractLinksFromMarkdown function ${line}`)
-    markdownLinkRegex.lastIndex = 0
     let match: RegExpExecArray | null
-    while ((match = markdownLinkRegex.exec(line)) !== null) {
-      console.log('match----')
+    // Use a fresh regex object for each line to avoid issues with global state
+    const regex = new RegExp(markdownLinkRegex)
+
+    while ((match = regex.exec(line)) !== null) {
+      console.log(`match----${{ url: match[2], line: index + 1 }}`)
       links.push({ url: match[2], line: index + 1 }) // match[2] contains the URL
     }
   })
