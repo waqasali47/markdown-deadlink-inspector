@@ -19,10 +19,16 @@ const checkLink = async (
     const config = {
       headers: {} as { [header: string]: string }
     }
-
-    if (jwtToken && url.startsWith('https://baseplate.legogroup.io/')) {
-      console.log(`Checking ${url} with JWT token`)
-      config.headers['Authorization'] = `Bearer ${jwtToken}`
+    if (url.startsWith('https://baseplate.legogroup.io/')) {
+      if (!jwtToken) {
+        console.log(
+          `Authorization required, unable to authorize URL check skipped: ${url}`
+        )
+        return // Skip the URL check
+      } else {
+        console.log(`Checking ${url} with JWT token`)
+        config.headers['Authorization'] = `Bearer ${jwtToken}`
+      }
     }
 
     const response = await axios.head(url, config)
