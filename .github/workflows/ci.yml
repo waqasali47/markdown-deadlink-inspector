@@ -13,7 +13,6 @@ permissions:
   contents: read
 
 jobs:
-  test-typescript:
     name: TypeScript Tests
     runs-on: ubuntu-latest
 
