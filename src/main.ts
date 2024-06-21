@@ -1,39 +1,14 @@
-import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
-interface MarkdownLink {
-  text: string
-  url: string
-  line: number
-}
+import markdownLinkExtractor from 'markdown-link-extractor'
+import * as core from '@actions/core'
+
 const readdir = fs.promises.readdir
 const readFile = fs.promises.readFile
-const useToken: boolean = process.env.INPUT_USETOKEN === 'true'
+
 const docsPath: string = process.env.DOCS_PATH || './docs'
 const jwtToken: string = process.env.JWT_TOKEN || ''
-
-const emptyImageLinkRegex = /!$$$$$(http[s]?:\/\/[^)]+)$/g
-const markdownLinkRegex = /$$([^$$]+)\]$(http[s]?:\/\/[^)]+)$/g
-const extractLinksFromMarkdown = (markdown: string): MarkdownLink[] => {
-  const lines = markdown.split(/\r?\n/)
-  const links: MarkdownLink[] = []
-
-  lines.forEach((line, index) => {
-    let match: RegExpExecArray | null
-    // Reset lastIndex to ensure the regex state is clear before each line is processed
-    markdownLinkRegex.lastIndex = 0
-    while ((match = markdownLinkRegex.exec(line)) !== null) {
-      links.push({
-        text: match[1], // match[1] contains the link text
-        url: match[2], // match[2] contains the URL
-        line: index + 1
-      })
-    }
-  })
-
-  return links
-}
 
 const checkLink = async (
   url: string,
@@ -41,14 +16,14 @@ const checkLink = async (
   line: number
 ): Promise<void> => {
   try {
-    const config: any = {}
-    if (
-      useToken &&
-      jwtToken &&
-      url.startsWith('https://baseplate.legogroup.io/')
-    ) {
-      config.headers = { Authorization: `Bearer ${jwtToken}` }
+    const config = {
+      headers: {} as { [header: string]: string }
     }
+
+    if (jwtToken && url.startsWith('https://baseplate.legogroup.io/')) {
+      config.headers['Authorization'] = `Bearer ${jwtToken}`
+    }
+
     const response = await axios.head(url, config)
     if (response.status === 200) {
       console.log(`✅ [${filePath}:${line}] ${url}`)
@@ -66,22 +41,15 @@ const checkLink = async (
   }
 }
 
-const extractEmptyImageLinksFromMarkdown = (markdown: string): string[] => {
-  const links: string[] = []
-  let match: RegExpExecArray | null
-
-  while ((match = emptyImageLinkRegex.exec(markdown)) !== null) {
-    links.push(match[1]) // match[1] contains the URL
-  }
-
-  return links
-}
-
 const checkLinksInMarkdown = async (filePath: string): Promise<void> => {
   const markdown: string = await readFile(filePath, 'utf8')
-  const links: MarkdownLink[] = extractLinksFromMarkdown(markdown)
-  for (const { url, line } of links) {
-    await checkLink(url, filePath, line)
+  const lines = markdown.split(/\r?\n/)
+  for (const [index, line] of lines.entries()) {
+    const extractedUrls = markdownLinkExtractor(line, true)
+    for (const url of extractedUrls) {
+      // Use for...of here as well
+      await checkLink(url, filePath, index + 1)
+    }
   }
 }
 /**
