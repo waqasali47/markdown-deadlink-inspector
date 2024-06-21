@@ -28471,6 +28471,7 @@ const extractLinksFromMarkdown = (markdown) => {
             links.push({ url: match[2], line: index + 1 }); // match[2] contains the URL
         }
     });
+    console.log(`links----${links}`);
     return links;
 };
 const checkLink = async (url, filePath, line) => {
@@ -28506,9 +28507,7 @@ const extractEmptyImageLinksFromMarkdown = (markdown) => {
 const checkLinksInMarkdown = async (filePath) => {
     const markdown = await readFile(filePath, 'utf8');
     const links = extractLinksFromMarkdown(markdown);
-    console.log(`checkLinksInMarkdown function ${filePath}`);
     for (const { url, line } of links) {
-        console.log(`Checking link: ${url}`);
         await checkLink(url, filePath, line);
     }
 };
@@ -28521,7 +28520,6 @@ async function run() {
         const files = await readdir(docsPath);
         const markdownFiles = files.filter(file => file.endsWith('.md'));
         for (const file of markdownFiles) {
-            console.log(file);
             await checkLinksInMarkdown(path.join(docsPath, file));
         }
         if (process.exitCode !== 0) {

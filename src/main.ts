@@ -28,7 +28,7 @@ const extractLinksFromMarkdown = (markdown: string): MarkdownLink[] => {
       links.push({ url: match[2], line: index + 1 }) // match[2] contains the URL
     }
   })
-
+  console.log(`links----${links}`)
   return links
 }
 
@@ -77,9 +77,7 @@ const extractEmptyImageLinksFromMarkdown = (markdown: string): string[] => {
 const checkLinksInMarkdown = async (filePath: string): Promise<void> => {
   const markdown: string = await readFile(filePath, 'utf8')
   const links: MarkdownLink[] = extractLinksFromMarkdown(markdown)
-  console.log(`checkLinksInMarkdown function ${filePath}`)
   for (const { url, line } of links) {
-    console.log(`Checking link: ${url}`)
     await checkLink(url, filePath, line)
   }
 }
@@ -92,7 +90,6 @@ export async function run(): Promise<void> {
     const files: string[] = await readdir(docsPath)
     const markdownFiles: string[] = files.filter(file => file.endsWith('.md'))
     for (const file of markdownFiles) {
-      console.log(file)
       await checkLinksInMarkdown(path.join(docsPath, file))
     }
     if (process.exitCode !== 0) {
